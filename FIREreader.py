@@ -1,7 +1,10 @@
+from __future__ import print_function
+
 import numpy as np
-import pandas as pd
-import copy
-import h5py,os, shutil
+import os
+
+from firefly_api.options import Options
+from firefly_api.reader import Reader,ParticleGroup
 
 ### depends on abg_python
 from abg_python.snapshot_utils import openSnapshot

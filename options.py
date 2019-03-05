@@ -1,3 +1,10 @@
+from __future__ import print_function
+
+import numpy as np
+import pandas as pd
+
+import os 
+
 class Options(object):
     """
     This is a class for organizing the various options you can pass to 
