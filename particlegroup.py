@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import numpy as np
 import pandas as pd
 
@@ -20,9 +18,9 @@ class ParticleGroup(object):
         """
         Implementation of builtin function __repr__
         """
-        mystr = "Particle Group of %s\n"%(self.UIname)
-        mystr += "Contains %d (%d after dec) particles and %d arrays\n"%(
-            self.nparts,self.nparts/self.decimation_factor,len(self.tracked_names))
+        mystr = "\nParticleGroup: %s\n"%(self.UIname)
+        mystr += "Contains %d particles (%d after decimation) and %d tracked fields"%(
+            self.nparts,self.nparts//self.decimation_factor,len(self.tracked_names))
         return mystr
 
     def __getitem__(self,key):
@@ -100,27 +98,23 @@ class ParticleGroup(object):
         try: 
             assert len(tracked_names) == len(tracked_filter_flags)
         except:
-            print(tracked_names,tracked_filter_flags)
             warnings.warn(FireflyWarning(
                 "Make sure each tracked_array has a tracked_filter_flag, assuming True."))
             new_tracked_filter_flags = np.append(
                 tracked_filter_flags,
                 [True]*(len(tracked_names)-len(tracked_filter_flags)),axis=0
             )
-            print(tracked_filter_flags,"becomes ->",new_tracked_filter_flags)
             tracked_filter_flags = new_tracked_filter_flags
 
         try: 
             assert len(tracked_names) == len(tracked_colormap_flags)
         except:
-            print(tracked_names,tracked_colormap_flags)
             warnings.warn(FireflyWarning(
                 "Make sure each tracked_array has a tracked_colormap_flag, assuming True."))
             new_tracked_colormap_flags = np.append(
                 tracked_colormap_flags,
                 [True]*(len(tracked_names)-len(tracked_colormap_flags)),axis=0
             )
-            print(tracked_colormap_flags,"becomes ->",new_tracked_colormap_flags)
             tracked_colormap_flags = new_tracked_colormap_flags
 
         
@@ -287,9 +281,9 @@ class ParticleGroup(object):
             warnings.warn(FireflyWarning(
                 "You will need to add the sub-filenames to"+
                 " filenames.json if this was not called by a Reader instance."))
-            print("Writing:",self,"JSON to %s"%full_path)
+            warnings.warn(FireflyWarning("Writing:",self,"JSON to %s"%full_path))
         if clean:
-            warnings.warn(FireflyWarning("Removing data files from %s"%full_path))
+            warnings.warn(FireflyWarning("Removing old JSON files from %s"%full_path))
             for fname in os.listdir(full_path):
                 if "json" in fname:
                     os.remove(os.path.join(full_path,fname))
@@ -320,9 +314,6 @@ class ParticleGroup(object):
 
             cur_index+=nparts_this_file
             if i_file == 0:
-                print(self.tracked_names,
-                    'filter:',self.tracked_filter_flags,
-                    'colormap:',self.tracked_colormap_flags)
                 outDict['filterKeys'] = np.array(self.tracked_names)[np.array(
                     self.tracked_filter_flags,dtype=bool)]
                 outDict['colormapKeys'] = np.array(self.tracked_names)[np.array(

@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import numpy as np
 import os
 
@@ -116,7 +114,8 @@ class FIREreader(Reader):
 
         ##  this i handle separately 
         if 'Coordinates' in returnKeys:
-            print("Do not put Coordinates in returnKeys,removing it... (and its flags)")
+            warnings.warn(FireflyWarning(
+                "Do not put Coordinates in returnKeys,removing it... (and its flags)"))
             returnKeys = list(returnKeys)
             filterFlags = list(filterFlags)
             colormapFlags = list(colormapFlags)
@@ -201,7 +200,7 @@ class FIREreader(Reader):
         (You're welcome!!). Also adds these particle groups to the reader's options file.
         """
         for ptype,UIname,dec_factor in list(zip(self.ptypes,self.UInames,self.dec_factors)):
-            print("Loading ptype %s"%ptype)
+            warnings.warn(FireflyWarning("Loading ptype %s"%ptype))
             snapdict = openSnapshot(
                 self.snapdir,
                 self.snapnum,

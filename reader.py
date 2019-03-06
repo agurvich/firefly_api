@@ -140,7 +140,7 @@ class Reader(object):
         ## write each particleGroup to JSON using their own method
         ##  save the filenames into a dictionary for filenames.json
         for particleGroup in self.particleGroups:
-            print("outputting",particleGroup)
+            warnings.warn(FireflyWarning("outputting:",particleGroup))
             this_filenames_and_nparts = particleGroup.outputToJSON(
                 self.path,
                 self.path_prefix,
