@@ -7,8 +7,19 @@ from firefly_api.options import Options
 from firefly_api.reader import Reader,ParticleGroup
 from firefly_api.errors import FireflyError,FireflyWarning,warnings
 
-### depends on abg_python
-from abg_python.snapshot_utils import openSnapshot
+
+try:
+    ### depends on abg_python, if you're me that's not a problem!
+    from abg_python.snapshot_utils import openSnapshot
+except ImportError:
+    try: 
+        import snapshot_utils
+        warnings.warn(FireflyWarning(
+            "importing openSnapshot from: {}".format(snapshot_utils.__file__)))
+        openSnapshot = snapshot_utils.openSnapshot
+    except ImportError:
+        raise ImportError("snapshot_utils not found, try looking inside Firefly/data"+
+            "or use yt to open your gizmo data")
 
 class FIREreader(Reader):
     """
