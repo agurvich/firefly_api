@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="firefly_api-agurvich",
+    name="firefly_api",
     version="0.0.1",
     author="Alex Gurvich",
     author_email="agurvich@u.northwestern.edu",
@@ -15,7 +15,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: BSD2 License",
+        "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
     ],
     py_modules=["options","reader","particlegroup"]
