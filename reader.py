@@ -102,7 +102,10 @@ class Reader(object):
             try:
                 assert validate in os.listdir(os.path.split(path_prefix)[0])   
             except:
-                IOError("JSONdir is not a sub-directory of a version of Firefly/data")
+                raise FireflyError("JSONdir is not a sub-directory of a version of Firefly/data")
+        if not os.path.isdir(self.JSONdir):
+            os.mkdir(self.JSONdir)
+
         return path_prefix,path
 
     def addParticleGroup(self,particleGroup):
