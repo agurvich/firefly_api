@@ -3,7 +3,7 @@ import pandas as pd
 
 import os 
 
-from firefly_api.errors import FireflyError,FireflyWarning,warnings
+from firefly_api.errors import FireflyError,FireflyWarning,FireflyMessage,warnings
 
 class ParticleGroup(object):
     """
@@ -132,7 +132,7 @@ class ParticleGroup(object):
 
         ## the most important thing, where do you want these particles
         ##  to live?
-        self.coordinates = coordinates
+        self.coordinates = np.array(coordinates)
 
         ## initialize this badboy
         self.nparts = len(coordinates)
@@ -147,8 +147,8 @@ class ParticleGroup(object):
 
         self.tracked_names = tracked_names
         self.tracked_arrays = tracked_arrays
-        self.tracked_filter_flags = tracked_filter_flags
-        self.tracked_colormap_flags = tracked_colormap_flags
+        self.tracked_filter_flags = np.array(tracked_filter_flags)
+        self.tracked_colormap_flags = np.array(tracked_colormap_flags)
 
         self.filenames_and_nparts = filenames_and_nparts
 
@@ -168,6 +168,9 @@ class ParticleGroup(object):
             'filterLims':dict(),
             'colormapVals':dict(),
             'colormapLims':dict(),
+            'colormap':1./64,
+            'colormapVariable':0,
+            'showColormap':False,
             'showVel':False,
             'plotNmax':None,
             'velType':None
@@ -278,10 +281,10 @@ class ParticleGroup(object):
         if not os.path.isdir(full_path):
             os.makedirs(full_path)
         if loud:
-            warnings.warn(FireflyWarning(
+            warnings.warn(FireflyMessage(
                 "You will need to add the sub-filenames to"+
                 " filenames.json if this was not called by a Reader instance."))
-            warnings.warn(FireflyWarning("Writing:",self,"JSON to %s"%full_path))
+            warnings.warn(FireflyMessage("Writing:",self,"JSON to %s"%full_path))
         if clean:
             warnings.warn(FireflyWarning("Removing old JSON files from %s"%full_path))
             for fname in os.listdir(full_path):
