@@ -186,11 +186,19 @@ class Options(object):
             'colormapVals':dict(), #initial coloring selection. This is a dict 
             #    with initial keys of the particle UInames, 
             #    then for each color the [min, max] range 
-            #    (e.g., 'color':{'Gas':{'log10Density':[0,1],'magVelocities':[20, 100]}} )
+            #    (e.g., 'colormapVals':{'Gas':{'log10Density':[0,1],'magVelocities':[20, 100]}} )
             'colormapLims':dict(), #initial [min, max] limits to the colors. 
             #    This is a dict with initial keys of the UInames 
             #    , then for each color the [min, max] range 
-            #    (e.g., 'color':{'Gas':{'log10Density':[0,1],'magVelocities':[20, 100]}} )
+            #    (e.g., 'colormapLims':{'Gas':{'log10Density':[0,1],'magVelocities':[20, 100]}} )
+            'colormap':dict(), # which colormap to use for each gas particle, defined by 
+            # the index of the row of a grid of colors that should be posted online TODO
+            # (index + 0.5) * (8/256)
+            # (e.g. 'colormap':{'Gas':0.015625, 'Stars':0.015625}
+            'colormapVariable':dict(), #index in arrays_to_track of array to colormap by 
+            # (e.g. 'colormapVariable':{'Gas':0, 'Stars':0}
+            'showColormap':dict(), # flags for whether the colormap should be initialized at startup
+            # (e.g. 'showColormap':{'Gas':False, 'Stars':False}
         }
 
     def addToOptions(
@@ -206,7 +214,7 @@ class Options(object):
         for key in [
             'UIparticle','UIdropdown','UIcolorPicker',
             'color','sizeMult','showParts',
-            'filterVals','filterLims','colormapVals','colormapLims','showVel','plotNmax','velType']:
+            'filterVals','filterLims','colormapVals','colormapLims','showVel','plotNmax','velType','colormap','colormapVariable','showColormap']:
             self[key][particleGroup.UIname]=particleGroup.options_default[key]
         
         ## and link this particle group to this Options instance, for better or worse.
