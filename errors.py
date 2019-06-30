@@ -10,3 +10,6 @@ class FireflyError(Exception):
 
 class FireflyWarning(Warning):
     pass
+
+class FireflyMessage(Warning):
+    pass
