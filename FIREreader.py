@@ -43,6 +43,7 @@ class FIREreader(Reader):
         prefix = 'FIREData',
         clean_JSONdir = 0,
         options = None,
+        tweenParams=None
         ):
         """
         snapdir - string, directory that contains all the hdf5 data files
@@ -66,6 +67,9 @@ class FIREreader(Reader):
             pass it here. `None` will generate default options. `reader.options.listKeys()`
             will give you a list of the different available options you can set
             using `reader.options["option_name"] = option_value`. 
+
+        `tweenParams=None` - a tweenParams instance for automating a fly-through
+            path by pressing `t` while within an open instance of Firefly.
 
         `write_startup='append'` - This is a flag for whether `startup.json` file
             should be written. It has 3 values: `True` -> writes a new `startup.json`
@@ -111,8 +115,7 @@ class FIREreader(Reader):
         except AssertionError:
             raise IOError("Cannot find %s"%snapdir)
 
-
-        ##  this i handle separately 
+        ##  this I handle separately 
         if 'Coordinates' in returnKeys:
             warnings.warn(FireflyWarning(
                 "Do not put Coordinates in returnKeys,removing it... (and its flags)"))
@@ -155,41 +158,15 @@ class FIREreader(Reader):
         ## do we need to take the log of it 
         self.doLogs = doLogs
 
-        ####### Reader __init__ below: #######
-
-        ## absolute path of where to place all the data files in, must be a 
-        ##  sub-directory of Firefly/data for Firefly to be able to find it.
-        if JSONdir is None:
-            ## let's try and guess what the JSONdir should be
-            raise Exception("Datadir guessing is unimplemented!")
-            """
-            raise IOError("You must specify the absolute path of the"+
-                " directory to save the JSON files using the JSONdir kwarg")
-            """
-        self.JSONdir = JSONdir
-        self.path_prefix,self.path = self.splitAndValidateDatadir()
-
-        #write the startup file?
-        self.write_startup = write_startup
-
-        #set the maximum number of particles per data file
-        self.max_npart_per_file = max_npart_per_file
-
-        ## prefix for the datafiles e.g. FIREdata
-        self.prefix = prefix
-
-        #remove the data files in the dataDir directory before adding more?
-        self.clean_JSONdir = clean_JSONdir 
-        
-        if options is None:
-            options = Options()
-
-        self.options = options
-    
-        ## array of particle groups
-        self.particleGroups = []
-        
-        self.particleGroups = []
+        ####### execute generic Reader __init__ below #######
+        super().__init__(
+            JSONdir=JSONdir,
+            write_startup=write_startup,
+            max_npart_per_file=max_npart_per_file,
+            prefix = prefix,
+            options = options,
+            tweenParams = tweenParams,
+            clean_JSONdir = clean_JSONdir,
 
     def loadData(self):
         """
