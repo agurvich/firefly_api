@@ -6,6 +6,7 @@ import pandas as pd
 import os 
 
 from firefly_api.options import Options
+from firefly_api.tween import TweenParams
 from firefly_api.particlegroup import ParticleGroup
 from firefly_api.errors import FireflyError,FireflyWarning,warnings
 
@@ -24,6 +25,7 @@ class Reader(object):
         max_npart_per_file = 10**4,
         prefix = 'Data',
         clean_JSONdir = 0,
+        tweenParams = None
         ):
         """
         `JSONdir=None` - This should be the name of the sub-directory that will
@@ -53,17 +55,29 @@ class Reader(object):
         `clean_JSONdir=0` - Whether you would like to delete all `.json` files in
             the `JSONdir`. Usually not necessary (since `filenames.json` will be
             updated) but good to clean up after yourself.
+
+        `tweenParams=None` - a tweenParams instance for automating a fly-through
+            path by pressing `t` while within an open instance of Firefly.
         """
+
         if options is not None:
             try:
                 ## fun fact, assert isinstance(options,Options) won't work with jupyter notebooks
                 ##  that use %load_ext autoreload
                 assert options.__class__.__name__ == 'Options'
             except AssertionError:
-                raise ValueError("Make sure you use an Options instance to specify Firefly settings.")
+                raise FireflyError("Make sure you use an Options instance to specify Firefly settings.")
         else:
             ## we'll use the default ones then
             options = Options()
+
+        if tweenParams is not None:
+            try:
+                assert options.__class__.__name__ == 'TweenParams'
+            except AssertionError:
+                raise FireflyError("Make sure you use a TweenParams instance to specify fly-through paths.")
+
+        self.tweenParams = tweenParams
 
         self.options = options
         ## absolute path of where to place all the data files in, must be a 
@@ -98,13 +112,18 @@ class Reader(object):
         references files correctly.
         """
         path_prefix,path = os.path.split(self.JSONdir)
+
         for validate in ['index.html','data','src','LICENSE','README.md']:
             try:
                 assert validate in os.listdir(os.path.split(path_prefix)[0])   
             except:
-                raise FireflyError("JSONdir is not a sub-directory of a version of Firefly/data")
+                warnings.warn(FireflyWarning(
+                    "JSONdir: {}\n".format(self.JSONdir)+
+                    "is not a sub-directory of Firefly/data. "+
+                    "This may produce confusing or inoperable results."))
+
         if not os.path.isdir(self.JSONdir):
-            os.mkdir(self.JSONdir)
+            os.makedirs(self.JSONdir)
 
         return path_prefix,path
 
@@ -182,3 +201,10 @@ class Reader(object):
 
         elif self.write_startup:
             pd.Series({"0":startup_path}).to_json(startup_file, orient='index') 
+
+        ## write a tweenParams file if a TweenParams instance is attached to reader
+        if hasattr(self,'tweenParams'):
+            self.tweenParams.outputToJSON(
+                self.JSONdir,
+                #prefix=self.prefix,
+                loud=loud)
