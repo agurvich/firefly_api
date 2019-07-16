@@ -112,14 +112,19 @@ class Reader(object):
         references files correctly.
         """
         path_prefix,path = os.path.split(self.JSONdir)
+        if path_prefix == '':
+            path_prefix = os.getcwd()
 
-        for validate in ['index.html','data','src','LICENSE','README.md']:
+        for validate in ['index.html','static','LICENSE','README.md']:
             try:
-                assert validate in os.listdir(os.path.split(path_prefix)[0])   
+                assert validate in os.listdir(
+                    os.path.join(
+                        os.path.split(path_prefix)[0],
+                        ".."))   
             except:
                 warnings.warn(FireflyWarning(
                     "JSONdir: {}\n".format(self.JSONdir)+
-                    "is not a sub-directory of Firefly/data. "+
+                    "is not a sub-directory of Firefly/static/data. "+
                     "This may produce confusing or inoperable results."))
 
         if not os.path.isdir(self.JSONdir):
