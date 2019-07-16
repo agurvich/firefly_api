@@ -8,7 +8,7 @@ import os
 from firefly_api.options import Options
 from firefly_api.tween import TweenParams
 from firefly_api.particlegroup import ParticleGroup
-from firefly_api.errors import FireflyError,FireflyWarning,warnings
+from firefly_api.errors import FireflyError,FireflyWarning,FireflyMessage,warnings
 
 class Reader(object):
     """
@@ -159,7 +159,7 @@ class Reader(object):
         ## write each particleGroup to JSON using their own method
         ##  save the filenames into a dictionary for filenames.json
         for particleGroup in self.particleGroups:
-            warnings.warn(FireflyWarning("outputting:",particleGroup))
+            warnings.warn(FireflyMessage("outputting:",particleGroup))
             this_filenames_and_nparts = particleGroup.outputToJSON(
                 self.path,
                 self.path_prefix,
