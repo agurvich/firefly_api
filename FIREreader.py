@@ -165,8 +165,8 @@ class FIREreader(Reader):
             max_npart_per_file=max_npart_per_file,
             prefix = prefix,
             options = options,
-            tweenParams = tweenParams,
             clean_JSONdir = clean_JSONdir,
+            tweenParams = tweenParams)
 
     def loadData(self):
         """
