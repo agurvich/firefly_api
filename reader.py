@@ -73,7 +73,7 @@ class Reader(object):
 
         if tweenParams is not None:
             try:
-                assert options.__class__.__name__ == 'TweenParams'
+                assert tweenParams.__class__.__name__ == 'TweenParams'
             except AssertionError:
                 raise FireflyError("Make sure you use a TweenParams instance to specify fly-through paths.")
 
@@ -203,7 +203,7 @@ class Reader(object):
             pd.Series({"0":startup_path}).to_json(startup_file, orient='index') 
 
         ## write a tweenParams file if a TweenParams instance is attached to reader
-        if hasattr(self,'tweenParams'):
+        if hasattr(self,'tweenParams') and self.tweenParams is not None:
             self.tweenParams.outputToJSON(
                 self.JSONdir,
                 #prefix=self.prefix,
