@@ -253,6 +253,68 @@ class ParticleGroup(object):
             ## use a boolean mask instead
             self.dec_inds = np.ones(self.nparts,dtype=bool)
 
+    def outputToDict(
+        self,
+        these_dec_inds=[None],
+        i_file=0,
+        verbose=False):
+        """
+        Outputs a subset of this ParticleGroup instance's 
+            data to a dictionary. The subset is determined by the 
+            `these_dec_inds` input which should be an array of indices
+            matching the tracked arrays. If no input mask is provided 
+            it will default to np.arange(len(coordinates)).
+        Input:
+            these_dec_inds = [None] - the decimation indices to 
+                use, defining a subset of the particlegroup data to 
+                output.
+            i_file=0 - the index of the file (if looping through 
+                your particle group data and outputting a series 
+                of files). If the index is 0 the output dictionary
+                will include the colormap and filter keys.
+        Output:
+            outDict - a dictionary containing the particlegroup
+                information for the indices matching the tracked
+                arrays.
+        """
+        
+        ## initialize the output dictionary
+        outDict = dict()
+
+        ## initialize a default set of dec inds if none are 
+        ##  passed
+        if (these_dec_inds[0] == None):
+            these_dec_inds = np.arange(len(self.coordinates))
+        
+        ## save the coordinates as a special case since they 
+        ##  aren't in the tracked array
+        outDict['Coordinates'] = self.coordinates[these_dec_inds]
+
+        ## do the bulk of the work in a simple loop
+        for tracked_name,tracked_arr in zip(
+            self.tracked_names,
+            self.tracked_arrays):
+
+            outDict[tracked_name]=tracked_arr[these_dec_inds]
+
+        ## if this is the first file, let's include the colormap
+        ##  and filter keys
+        if i_file == 0:
+            if (verbose): print(self.tracked_names,
+                'filter:',self.tracked_filter_flags,
+                'colormap:',self.tracked_colormap_flags)
+            outDict['filterKeys'] = np.array(self.tracked_names)[np.array(
+                 self.tracked_filter_flags,dtype=bool)]
+            outDict['colormapKeys'] = np.array(self.tracked_names)[np.array(
+                self.tracked_colormap_flags,dtype=bool)]
+
+            ## TODO this needs to be changed, this is a flag for having the
+            ##  opacity vary across a particle as the impact parameter projection
+            ##  of cubic spline kernel
+            outDict['doSPHrad'] = [0]
+        
+        return outDict
+
     def outputToJSON(
         self,
         path, ## sub-directory name
@@ -308,24 +370,9 @@ class ParticleGroup(object):
                 these_dec_inds = self.dec_inds[cur_index:cur_index+nparts_this_file]
             else:
                 these_dec_inds = np.arange(cur_index,cur_index+nparts_this_file)
-
-            outDict = dict()
-            outDict['Coordinates'] = self.coordinates[these_dec_inds]
-
-            for tracked_name,tracked_arr in zip(self.tracked_names,self.tracked_arrays):
-                outDict[tracked_name]=tracked_arr[these_dec_inds]
-
-            cur_index+=nparts_this_file
-            if i_file == 0:
-                outDict['filterKeys'] = np.array(self.tracked_names)[np.array(
-                    self.tracked_filter_flags,dtype=bool)]
-                outDict['colormapKeys'] = np.array(self.tracked_names)[np.array(
-                    self.tracked_colormap_flags,dtype=bool)]
-
-                ## TODO this needs to be changed, this is a flag for having the
-                ##  opacity vary across a particle as the impact parameter projection
-                ##  of cubic spline kernel
-                outDict['doSPHrad'] = [0]
+        
+            outDict = self.outputToDict(these_dec_inds, i_file)
+            cur_index += nparts_this_file
 
             pd.Series(outDict).to_json(os.path.join(path_prefix,fname), orient='index')
 
