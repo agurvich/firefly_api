@@ -56,6 +56,7 @@ class ParticleGroup(object):
         tracked_colormap_flags = [],
         decimation_factor = 1,
         filenames_and_nparts = None,
+        linked_options=None,
         **option_kwargs):
         """
         `UIname` - Name of the particle group that shows up in the UI, 4-5 characters is best
@@ -203,6 +204,7 @@ class ParticleGroup(object):
                 self.options_default[option_kwarg] = option_kwargs[option_kwarg]
             else:
                 raise KeyError("Invalid option kwarg")
+        self.linked_options = linked_options
         
     def trackArray(self,name,arr,filter_flag=1,colormap_flag=1):
         """
