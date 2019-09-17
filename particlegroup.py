@@ -209,6 +209,7 @@ class ParticleGroup(object):
             else:
                 raise KeyError("Invalid option kwarg")
         self.linked_options = linked_options
+        self.doSPHrad = doSPHrad
         
     def trackArray(self,name,arr,filter_flag=1,colormap_flag=1):
         """
