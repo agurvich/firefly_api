@@ -57,6 +57,7 @@ class ParticleGroup(object):
         decimation_factor = 1,
         filenames_and_nparts = None,
         linked_options=None,
+        doSPHrad=False,
         **option_kwargs):
         """
         `UIname` - Name of the particle group that shows up in the UI, 4-5 characters is best
@@ -85,6 +86,9 @@ class ParticleGroup(object):
             `[("json_name0.json",nparts_this_file0),("json_name1.json",nparts_this_file1) ... ]`
             where where the sum of `nparts_this_file%d` is exactly `nparts`. These files
             will automatically be added to `filenames.json` if you use `reader.dumpToJSON`.
+
+        `doSPHrad=False` - flag to vary the opacity across a particle by the SPH cubic spline. Should
+            also provide SmoothingLength as a tracked_array. 
 
         `**option_kwargs` - allows you to set default options like the color, particle sizes,
             etc... for this particle group at the creation of the instance. You can see available
@@ -313,7 +317,7 @@ class ParticleGroup(object):
             ## TODO this needs to be changed, this is a flag for having the
             ##  opacity vary across a particle as the impact parameter projection
             ##  of cubic spline kernel
-            outDict['doSPHrad'] = [0]
+            outDict['doSPHrad'] = [self.doSPHrad]
         
         return outDict
 
