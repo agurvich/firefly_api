@@ -209,7 +209,8 @@ class FIREreader(Reader):
                 tracked_arrays = tracked_arrays,
                 decimation_factor = dec_factor,
                 tracked_filter_flags = tracked_filter_flags,
-                tracked_colormap_flags = tracked_colormap_flags
+                tracked_colormap_flags = tracked_colormap_flags,
+                doSPHrad = 'SmoothingLength' in tracked_names
                 )]
 
             ## save the filenames that were opened (so you can re-open them yourself in that order)
