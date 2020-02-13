@@ -224,7 +224,7 @@ class ParticleGroup(object):
 
         ## go ahead and put it in the tracked arrays
         self.tracked_names = np.append(self.tracked_names,[name],axis=0)
-        self.tracked_arrays = np.append(self.tracked_arrays,[arr],axis=0)
+        self.tracked_arrays = self.tracked_arrays.append(arr)
         self.tracked_filter_flags = np.append(
             self.tracked_filter_flags,
             [filter_flag],axis=0)

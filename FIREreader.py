@@ -206,9 +206,7 @@ class FIREreader(Reader):
                     tracked_colormap_flags = np.append(
                         tracked_colormap_flags,
                         [colormapFlag],axis=0)
-                    tracked_arrays= np.append(
-                        tracked_arrays,
-                        [arr],axis=0)
+                    tracked_arrays.append(arr)
                 
             self.particleGroups = np.append(
                 self.particleGroups,
