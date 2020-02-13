@@ -223,14 +223,14 @@ class ParticleGroup(object):
         assert self.nparts == len(arr)
 
         ## go ahead and put it in the tracked arrays
-        self.tracked_names = np.append(self.tracked_names,[name])
-        self.tracked_arrays = np.append(self.tracked_arrays,[arr])
+        self.tracked_names = np.append(self.tracked_names,[name],axis=0)
+        self.tracked_arrays = np.append(self.tracked_arrays,[arr],axis=0)
         self.tracked_filter_flags = np.append(
             self.tracked_filter_flags,
-            [filter_flag])
+            [filter_flag],axis=0)
         self.tracked_colormap_flags = np.append(
             self.tracked_colormap_flags,
-            [colormap_flag])
+            [colormap_flag],axis=0)
 
         ## and add this to the filter limits arrays, see __init__ above
         if filter_flag: 

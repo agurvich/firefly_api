@@ -142,7 +142,7 @@ class Reader(object):
         ## data validation of new ParticleGroup happened in its initialization
         self.particleGroups = np.append(
             self.particleGroups,
-            [particleGroup])
+            [particleGroup],axis=0)
 
         ## add this particle group to the reader's options file
         self.options.addToOptions(particleGroup)

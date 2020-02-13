@@ -199,16 +199,16 @@ class FIREreader(Reader):
 
                     tracked_names = np.append(
                         tracked_names,
-                        [returnKey])
+                        [returnKey],axis=0)
                     tracked_filter_flags = np.append(
                         tracked_filter_flags,
-                        [filterFlag])
+                        [filterFlag],axis=0)
                     tracked_colormap_flags = np.append(
                         tracked_colormap_flags,
-                        [colormapFlag])
+                        [colormapFlag],axis=0)
                     tracked_arrays= np.append(
                         tracked_arrays,
-                        [arr])
+                        [arr],axis=0)
                 
             self.particleGroups = np.append(
                 self.particleGroups,
@@ -220,7 +220,8 @@ class FIREreader(Reader):
                     decimation_factor = dec_factor,
                     tracked_filter_flags = tracked_filter_flags,
                     tracked_colormap_flags = tracked_colormap_flags,
-                    doSPHrad = 'SmoothingLength' in tracked_names)])
+                    doSPHrad = 'SmoothingLength' in tracked_names)],
+                axis=0)
 
             ## save the filenames that were opened (so you can re-open them yourself in that order)
             self.particleGroups[-1].filenames_opened = snapdict['fnames']
