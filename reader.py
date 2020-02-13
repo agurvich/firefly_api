@@ -140,7 +140,9 @@ class Reader(object):
             particleGroup - the particle group in question that you would like to add
         """
         ## data validation of new ParticleGroup happened in its initialization
-        self.particleGroups += [particleGroup]
+        self.particleGroups = np.append(
+            self.particleGroups,
+            [particleGroup])
 
         ## add this particle group to the reader's options file
         self.options.addToOptions(particleGroup)
