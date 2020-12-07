@@ -105,6 +105,13 @@ class Reader(object):
         ## array of particle groups
         self.particleGroups = []
 
+        ## where do the firefly jsons live?
+        ##  firefly_api lives in data, so let's steal the 
+        ##  path from there
+        self.DATA_dir = os.path.dirname(
+                os.path.dirname(
+                os.path.realpath(__file__)))
+
     def splitAndValidateDatadir(self):
         """
         Ensures that files will be output to a location that Firefly 
@@ -139,6 +146,7 @@ class Reader(object):
         Input:
             particleGroup - the particle group in question that you would like to add
         """
+
         ## data validation of new ParticleGroup happened in its initialization
         self.particleGroups = np.append(
             self.particleGroups,
@@ -187,8 +195,26 @@ class Reader(object):
         pd.Series(filenamesDict).to_json(os.path.join(self.JSONdir,'filenames.json'), orient='index')  
 
         ## add these files to the startup.json
-        startup_path = os.path.join("data",self.path)
-        startup_file = os.path.join(self.path_prefix,'startup.json')
+        if os.path.dirname(self.JSONdir) == 'data':
+            ## use the relative path
+            startup_path = os.path.join("data",self.path)
+        else:
+            startup_path = os.path.join("data",self.path)
+
+            ## create a symlink so that data can 
+            ##  be read from a "sub-directory"
+            try:
+                os.symlink(self.JSONdir,os.path.join(
+                    self.DATA_dir,
+                    self.path))
+            except FileExistsError:
+                warnings.warn(FireflyMessage("Symlink already exists. Skipping."))
+
+        #startup_file = os.path.join(self.path_prefix,'startup.json')
+        startup_file = os.path.join(
+            self.DATA_dir, 
+            'startup.json')
+
         if self.write_startup == 'append' and os.path.isfile(startup_file):
             with open(startup_file,'r+') as handle:
                 startup_dict=pd.io.json.loads(''.join(handle.readlines()))
