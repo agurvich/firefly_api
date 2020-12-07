@@ -50,10 +50,10 @@ class ParticleGroup(object):
         self,
         UIname,
         coordinates,
-        tracked_arrays = [],
-        tracked_names = [],
-        tracked_filter_flags = [],
-        tracked_colormap_flags = [],
+        tracked_arrays = None,
+        tracked_names = None,
+        tracked_filter_flags = None,
+        tracked_colormap_flags = None,
         decimation_factor = 1,
         filenames_and_nparts = None,
         linked_options=None,
@@ -94,6 +94,13 @@ class ParticleGroup(object):
             etc... for this particle group at the creation of the instance. You can see available
             options by looking at `list(particleGroup.options_default.keys())`.
         """
+
+        ## handle default values for iterables
+        tracked_arrays = [] if tracked_arrays is None else tracked_arrays
+        tracked_names = [] if tracked_names is None else tracked_names
+        tracked_filter_flags = [] if tracked_filter_flags is None else tracked_filter_flags
+        tracked_colormap_flags = [] if tracked_colormap_flags is None else tracked_colormap_flags
+
         ## assert statements and user-friendly error messages
         try:
             assert len(tracked_names) == len(tracked_arrays)
@@ -224,7 +231,7 @@ class ParticleGroup(object):
 
         ## go ahead and put it in the tracked arrays
         self.tracked_names = np.append(self.tracked_names,[name],axis=0)
-        self.tracked_arrays = self.tracked_arrays.append(arr)
+        self.tracked_arrays.append(arr)
         self.tracked_filter_flags = np.append(
             self.tracked_filter_flags,
             [filter_flag],axis=0)
