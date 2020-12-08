@@ -87,6 +87,7 @@ class Options(object):
             ########################
             #this should not be modified
             'loaded':True, #used in the web app to check if the options have been read in
+            'annotation':None # adds some text at the very top
         }
 
         ## flags for enabling different elements of the UI
