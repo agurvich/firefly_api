@@ -212,7 +212,7 @@ class Reader(object):
 
         #startup_file = os.path.join(self.path_prefix,'startup.json')
         startup_file = os.path.join(
-            self.DATA_dir, 
+            os.path.dirname(self.JSONdir),
             'startup.json')
 
         if self.write_startup == 'append' and os.path.isfile(startup_file):
