@@ -106,11 +106,16 @@ class Reader(object):
         self.particleGroups = []
 
         ## where do the firefly jsons live?
-        ##  firefly_api lives in data, so let's steal the 
+        ##  firefly_api lives in dataReader, so let's steal the 
         ##  path from there
-        self.DATA_dir = os.path.dirname(
-                os.path.dirname(
-                os.path.realpath(__file__)))
+        self.DATA_dir = os.path.join(
+                os.path.dirname( ## /
+                os.path.dirname( ## /dataReader
+                os.path.dirname(  
+                os.path.realpath(__file__)))),
+                'static', ## /static
+                'data') ## /static/data
+
 
     def splitAndValidateDatadir(self):
         """
@@ -195,11 +200,8 @@ class Reader(object):
         pd.Series(filenamesDict).to_json(os.path.join(self.JSONdir,'filenames.json'), orient='index')  
 
         ## add these files to the startup.json
-        if os.path.dirname(self.JSONdir) == 'data':
-            ## use the relative path
-            startup_path = os.path.join("data",self.path)
-        else:
-            startup_path = os.path.join("data",self.path)
+        startup_path = os.path.join("data",self.path)
+        if not os.path.dirname(self.JSONdir) == 'data':
 
             ## create a symlink so that data can 
             ##  be read from a "sub-directory"
@@ -210,9 +212,8 @@ class Reader(object):
             except FileExistsError:
                 warnings.warn(FireflyMessage("Symlink already exists. Skipping."))
 
-        #startup_file = os.path.join(self.path_prefix,'startup.json')
         startup_file = os.path.join(
-            os.path.dirname(self.JSONdir),
+            self.DATA_dir,
             'startup.json')
 
         if self.write_startup == 'append' and os.path.isfile(startup_file):
