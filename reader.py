@@ -135,9 +135,11 @@ class Reader(object):
                         ".."))   
             except:
                 warnings.warn(FireflyWarning(
-                    "JSONdir: {}\n".format(self.JSONdir)+
+                    "JSONdir: {} -- ".format(self.JSONdir)+
                     "is not a sub-directory of Firefly/static/data. "+
-                    "This may produce confusing or inoperable results."))
+                    "\nThis may produce confusing or inoperable results. "+
+                    "As such, we will create a symlink for you. You're "+
+                    "welcome."))
 
         if not os.path.isdir(self.JSONdir):
             os.makedirs(self.JSONdir)
@@ -179,7 +181,7 @@ class Reader(object):
         ## write each particleGroup to JSON using their own method
         ##  save the filenames into a dictionary for filenames.json
         for particleGroup in self.particleGroups:
-            warnings.warn(FireflyMessage("outputting:",particleGroup))
+            FireflyMessage("outputting:",particleGroup)
             this_filenames_and_nparts = particleGroup.outputToJSON(
                 self.path,
                 self.path_prefix,
@@ -211,7 +213,7 @@ class Reader(object):
                     self.DATA_dir,
                     self.path))
             except FileExistsError:
-                warnings.warn(FireflyMessage("Symlink already exists. Skipping."))
+                FireflyMessage("Symlink already exists. Skipping.")
 
         startup_file = os.path.join(
             self.DATA_dir,

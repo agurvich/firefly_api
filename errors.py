@@ -11,5 +11,5 @@ class FireflyError(Exception):
 class FireflyWarning(Warning):
     pass
 
-class FireflyMessage(Warning):
-    pass
+def FireflyMessage(*args):
+    print(*args)
