@@ -1,7 +1,6 @@
 from __future__ import print_function
 
 import numpy as np
-import pandas as pd
 
 import os 
 
@@ -9,6 +8,7 @@ from firefly_api.options import Options
 from firefly_api.tween import TweenParams
 from firefly_api.particlegroup import ParticleGroup
 from firefly_api.errors import FireflyError,FireflyWarning,FireflyMessage,warnings
+from firefly_api.json_utils import write_to_json,load_from_json
 
 class Reader(object):
     """
@@ -192,7 +192,8 @@ class Reader(object):
 
         ## really... it has to be an array with a tuple with a 0 in the nparts spot? 
         filenamesDict['options'] = [(os.path.join(self.path,self.prefix+self.options.options_filename),0)]
-        pd.Series(filenamesDict).to_json(os.path.join(self.JSONdir,'filenames.json'), orient='index')  
+
+        write_to_json(filenamesDict,os.path.join(self.JSONdir,'filenames.json'))
 
         ## add these files to the startup.json
         if os.path.dirname(self.JSONdir) == 'data':
@@ -216,8 +217,7 @@ class Reader(object):
             'startup.json')
 
         if self.write_startup == 'append' and os.path.isfile(startup_file):
-            with open(startup_file,'r+') as handle:
-                startup_dict=pd.io.json.loads(''.join(handle.readlines()))
+            startup_dict = load_from_json(startup_file)
 
             maxx = 0 
             need_to_add = True
@@ -230,10 +230,10 @@ class Reader(object):
             
             if need_to_add:
                 startup_dict[str(maxx+1)]=startup_path
-                pd.Series(startup_dict).to_json(startup_file,orient='index')
+                write_to_json(startup_dict,startup_file)
 
         elif self.write_startup:
-            pd.Series({"0":startup_path}).to_json(startup_file, orient='index') 
+            write_to_json({"0":startup_path},startup_file)
 
         ## write a tweenParams file if a TweenParams instance is attached to reader
         if hasattr(self,'tweenParams') and self.tweenParams is not None:

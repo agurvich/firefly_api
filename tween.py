@@ -1,11 +1,11 @@
 from __future__ import print_function
 
 import numpy as np
-import pandas as pd
 
 import os 
 
 from firefly_api.errors import FireflyError,FireflyWarning,warnings
+from firefly_api.json_utils import write_to_json
 
 class TweenParams(object):
     """A class to store tween parameters and make an output file"""
@@ -107,5 +107,5 @@ class TweenParams(object):
             'duration':self.durations,
             'position':keyframe_dicts
         }
-        pd.Series(tween_params_dict).to_json(
-            os.path.join(JSONdir,prefix+filename), orient='index')
+
+        write_to_json(tween_params_dict,os.path.join(JSONdir,prefix+filename))

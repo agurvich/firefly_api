@@ -1,11 +1,11 @@
 from __future__ import print_function
 
 import numpy as np
-import pandas as pd
 
 import os 
 
 from firefly_api.errors import FireflyError,FireflyWarning,warnings
+from firefly_api.json_utils import write_to_json,load_from_json
 
 class Options(object):
     """
@@ -251,8 +251,7 @@ class Options(object):
         filename = self.options_filename if filename is None else filename
         all_options_dict = self.outputToDict()
 
-        pd.Series(all_options_dict).to_json(
-            os.path.join(JSONdir,prefix+filename), orient='index')  
+        write_to_json(all_options_dict,os.path.join(JSONdir,prefix+filename))
 
         if loud:
             warnings.warn(FireflyWarning(
@@ -268,8 +267,7 @@ class Options(object):
         """
 
         if os.path.isfile(filename):
-            with open(filename,'r') as handle:
-                options_dict=pd.io.json.loads(''.join(handle.readlines()))
+            options_dict = load_from_json(filename)
         else:
             raise IOError("Options file: %s doesn't exist."%filename) 
 

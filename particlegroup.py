@@ -1,9 +1,10 @@
 import numpy as np
-import pandas as pd
+
 
 import os 
 
 from firefly_api.errors import FireflyError,FireflyWarning,FireflyMessage,warnings
+from firefly_api.json_utils import write_to_json
 
 class ParticleGroup(object):
     """
@@ -392,7 +393,7 @@ class ParticleGroup(object):
             outDict = self.outputToDict(these_dec_inds, i_file)
             cur_index += nparts_this_file
 
-            pd.Series(outDict).to_json(os.path.join(path_prefix,fname), orient='index')
+            write_to_json(outDict,os.path.join(path_prefix,fname))
 
         return self.filenames_and_nparts
 
