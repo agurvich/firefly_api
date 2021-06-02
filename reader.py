@@ -60,6 +60,23 @@ class Reader(object):
             path by pressing `t` while within an open instance of Firefly.
         """
 
+        ## where will firefly look for jsons
+        ##  firefly_api lives in dataReader, so let's steal the 
+        ##  path from there
+        self.DATA_dir = os.path.join(
+                os.path.dirname( ## /
+                os.path.dirname( ## /dataReader
+                os.path.dirname(  
+                os.path.realpath(__file__)))),
+                'static', ## /static
+                'data') ## /static/data
+
+        if JSONdir is None:
+            FireflyMessage("JSONdir is None, defaulting to %s/%s"%(self.DATA_dir,prefix))
+            JSONdir = os.path.join(
+                self.DATA_dir,
+                prefix)
+
         if options is not None:
             try:
                 ## fun fact, assert isinstance(options,Options) won't work with jupyter notebooks
@@ -104,18 +121,6 @@ class Reader(object):
     
         ## array of particle groups
         self.particleGroups = []
-
-        ## where do the firefly jsons live?
-        ##  firefly_api lives in dataReader, so let's steal the 
-        ##  path from there
-        self.DATA_dir = os.path.join(
-                os.path.dirname( ## /
-                os.path.dirname( ## /dataReader
-                os.path.dirname(  
-                os.path.realpath(__file__)))),
-                'static', ## /static
-                'data') ## /static/data
-
 
     def splitAndValidateDatadir(self):
         """
