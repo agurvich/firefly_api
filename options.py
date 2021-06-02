@@ -37,7 +37,7 @@ class Options(object):
             if '_options' in attr:
                 if key in getattr(self,attr).keys():
                     return attr
-        raise KeyError("Invalid option key")
+        raise KeyError("Invalid option key %s"%key)
         
     def listKeys(self,values=True):
         """ 
