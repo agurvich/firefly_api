@@ -362,10 +362,10 @@ class ParticleGroup(object):
         if not os.path.isdir(full_path):
             os.makedirs(full_path)
         if loud:
-            warnings.warn(FireflyMessage(
+            FireflyMessage(
                 "You will need to add the sub-filenames to"+
-                " filenames.json if this was not called by a Reader instance."))
-            warnings.warn(FireflyMessage("Writing:",self,"JSON to %s"%full_path))
+                " filenames.json if this was not called by a Reader instance.")
+            FireflyMessage("Writing:",self,"JSON to %s"%full_path)
         if clean:
             warnings.warn(FireflyWarning("Removing old JSON files from %s"%full_path))
             for fname in os.listdir(full_path):
