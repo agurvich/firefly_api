@@ -3,7 +3,7 @@ import os
 
 from firefly_api.options import Options
 from firefly_api.reader import Reader,ParticleGroup
-from firefly_api.errors import FireflyError,FireflyWarning,warnings
+from firefly_api.errors import FireflyError,FireflyWarning,FireflyMessage,warnings
 
 
 try:
@@ -28,14 +28,14 @@ class FIREreader(Reader):
     def __init__(self,
         snapdir, # directory that contains all the hdf5 data files
         snapnum, # which snapnumber to open
-        ptypes = [], # which particle types to extract
-        UInames = [], # what those particle types will be called in the UI
-        dec_factors = [], # factor by which to decimate the particle types by
-        returnKeys = [], # which things to read from the simulation
-        filterFlags = [], # flags whether we should filter by that returnKey
-        colormapFlags = [], # flags whether we should color by that returnKey
-        doMags = [], # flags for whether we should take the magnitude of that returnKey
-        doLogs = [], # flags for whether we should take the log of that returnKey
+        ptypes = None, # which particle types to extract
+        UInames = None, # what those particle types will be called in the UI
+        dec_factors = None, # factor by which to decimate the particle types by
+        returnKeys = None, # which things to read from the simulation
+        filterFlags = None, # flags whether we should filter by that returnKey
+        colormapFlags = None, # flags whether we should color by that returnKey
+        doMags = None, # flags for whether we should take the magnitude of that returnKey
+        doLogs = None, # flags for whether we should take the log of that returnKey
         ## arguments from Reader
         JSONdir=None, ## abs path, must be a sub-directory of Firefly/data
         write_startup = 'append',# True -> write | False -> leave alone | "append" -> adds to existing file
@@ -90,6 +90,17 @@ class FIREreader(Reader):
             the `JSONdir`. Usually not necessary (since `filenames.json` will be
             updated) but good to clean up after yourself.
         """
+
+        ## handle default input
+        ptypes = [] if ptypes is None else ptypes
+        UInames = [] if UInames is None else UInames
+        dec_factors = [] if dec_factors is None else dec_factors
+        returnKeys = [] if returnKeys is None else returnKeys
+        filterFlags = [] if filterFlags is None else filterFlags
+        colormapFlags = [] if colormapFlags is None else colormapFlags
+        doMags = [] if doMags is None else doMags
+        doLogs = [] if doLogs is None else doLogs
+
         ## input validation
         ##  ptypes
         try:
@@ -177,11 +188,11 @@ class FIREreader(Reader):
         (You're welcome!!). Also adds these particle groups to the reader's options file.
         """
         for ptype,UIname,dec_factor in list(zip(self.ptypes,self.UInames,self.dec_factors)):
-            warnings.warn(FireflyWarning("Loading ptype %s"%ptype))
+            FireflyMessage("Loading ptype %s"%ptype)
             snapdict = openSnapshot(
                 self.snapdir,
                 self.snapnum,
-                int(ptype[-1]), ## ptype should be PartType4,etc...
+                int(ptype), ## ptype should be PartType4,etc...
                 keys_to_extract = ['Coordinates']+self.returnKeys
             )
 
@@ -190,23 +201,32 @@ class FIREreader(Reader):
                 self.returnKeys,self.filterFlags,self.colormapFlags,self.doMags,self.doLogs)):
                 if returnKey in snapdict:
                     arr = snapdict[returnKey]
-                    if doLog:
-                        arr = np.log10(arr)
-                        returnKey = 'log10%s'%returnKey
-                    elif doMag:
-                        arr = np.linalg.norm(arr,axis=1)
-                        returnKey = 'mag%s'%returnKey
+                ## if asked to compute galactocentric radius from the coordinates
+                elif returnKey in ['GCRadius']:
+                    arr = np.sqrt(np.sum(snapdict['Coordinates']**2,axis=1))
+                else:
+                    continue
 
-                    tracked_names = np.append(
-                        tracked_names,
-                        [returnKey],axis=0)
-                    tracked_filter_flags = np.append(
-                        tracked_filter_flags,
-                        [filterFlag],axis=0)
-                    tracked_colormap_flags = np.append(
-                        tracked_colormap_flags,
-                        [colormapFlag],axis=0)
-                    tracked_arrays.append(arr)
+                if doLog:
+                    arr = np.log10(arr)
+                    returnKey = 'log10%s'%returnKey
+                elif doMag:
+                    arr = np.linalg.norm(arr,axis=1)
+                    returnKey = 'mag%s'%returnKey
+
+                tracked_names = np.append(
+                    tracked_names,
+                    [returnKey],axis=0)
+
+                tracked_filter_flags = np.append(
+                    tracked_filter_flags,
+                    [filterFlag],axis=0)
+
+                tracked_colormap_flags = np.append(
+                    tracked_colormap_flags,
+                    [colormapFlag],axis=0)
+
+                tracked_arrays.append(arr)
                 
             self.particleGroups = np.append(
                 self.particleGroups,
@@ -228,3 +248,60 @@ class FIREreader(Reader):
             self.options.addToOptions(self.particleGroups[-1])
 
         return self.particleGroups
+
+class DefaultReader(FIREreader):
+    
+    def __init__(
+        self,
+        path_to_snapshots,
+        decimation=10):
+        """
+        A highly specific iteration of FIREreader that will create JSON files with
+        only a single line for a default view.
+        """
+
+        if path_to_snapshots[-1] == os.sep:
+            path_to_snapshots = path_to_snapshots[:-1]
+
+        snapdir = os.path.dirname(path_to_snapshots)
+        try:
+            snapnum = int(path_to_snapshots.split('_')[-1])
+        except:
+            raise ValueError(
+                "%s should be formatted as 'path/to/output/snapdir_xxx'"%path_to_snapshots+
+                " where xxx is an integer")
+
+        ## initialize the reader object
+        super().__init__(
+            snapdir,
+            snapnum,
+            ptypes = [0,4], # which particle types to extract
+            UInames = ['gas','stars'], # what those particle types will be called in the UI
+            dec_factors = [decimation,decimation], # factor by which to decimate the particle types by
+            returnKeys = ['AgeGyr','Temperature','Velocities','GCRadius'], # which things to read from the simulation
+            filterFlags = [True,True,True,True], # flags whether we should filter by that returnKey
+            colormapFlags = [True,True,True,True], # flags whether we should color by that returnKey
+            doMags = [False,False,True,False], # flags for whether we should take the magnitude of that returnKey
+            doLogs = [False,True,False,False], # flags for whether we should take the log of that returnKey
+            ## arguments from Reader
+            JSONdir=None, ## abs path, must be a sub-directory of Firefly/data
+            write_startup = True,# True -> write | False -> leave alone | "append" -> adds to existing file
+            max_npart_per_file = 10**4,
+            prefix = 'FIREData_%d'%snapnum,
+            clean_JSONdir = False,
+            options = None,
+            tweenParams=None)
+
+        ## load the data
+        self.loadData()
+
+        self.options['color']['gas'] = [1,0,0,1]
+        self.options['color']['stars'] = [0,0,1,1]
+
+        self.options['sizeMult']['gas'] = 0.5
+        self.options['sizeMult']['stars'] = 0.5
+
+        self.options['camera'] = [0,0,-15]
+
+        ## dump the JSON files
+        self.dumpToJSON(loud=True)
