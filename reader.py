@@ -1,14 +1,16 @@
 from __future__ import print_function
 
-import numpy as np
-
+import h5py
 import os 
+import requests
+import json
+import numpy as np
 
 from firefly_api.options import Options
 from firefly_api.tween import TweenParams
 from firefly_api.particlegroup import ParticleGroup
 from firefly_api.errors import FireflyError,FireflyWarning,FireflyMessage,warnings
-from firefly_api.json_utils import write_to_json,load_from_json
+from firefly_api.json_utils import write_to_json,load_from_json,clean_dictionary
 
 class Reader(object):
     """
@@ -249,3 +251,125 @@ class Reader(object):
                 self.JSONdir,
                 #prefix=self.prefix,
                 loud=loud)
+
+    def outputToDict(self):
+        """
+        Formats the data in the reader to a python dictionary,
+        using the attached Options
+        instance's and particleGroups' outputToDict() methods.
+        """
+
+        outputDict = {}
+        outputDict['parts'] = {}
+
+        ## create each particleGroup's dictionary using their own method
+        for particleGroup in self.particleGroups:
+            outputDict['parts'][particleGroup.UIname] = particleGroup.outputToDict()
+
+        ## store the options file in the output dictionary
+        outputDict['options'] = self.options.outputToDict()
+
+        return outputDict
+
+    def sendDataViaFlask(self,port=5000):
+
+        ## wrap outputToDict call in json_utils.clean_dictionary
+        ##  to remove any numpy types
+        outputDict = clean_dictionary(self.outputToDict())
+
+        ## post the json to the listening url data_input
+        ##  defined in FireflyFlaskApp.py
+        print("posting...",end='')
+        requests.post(f'http://localhost:{port:d}/data_input',json=json.dumps(outputDict))
+        print("data posted!")
+
+class SimpleReader(Reader):
+
+    def __init__(
+        self,
+        path_to_data,
+        write_jsons_to_disk=True,
+        **kwargs):
+        """
+        A simple reader that will take as minimal input the path to a 
+        (set of) .hdf5 file(s) and extract each top level group's
+        'Coordinates' or 'x','y','z' values. 
+
+        Keyword arguments are passed to the Reader initialization.
+
+        Input:
+            path_to_data - path to .hdf5 file(s)
+            write_jsons_to_disk=True - flag to write JSONs to disk
+                immediately at the end of SimpleReader's __init__
+        """
+
+        if '.hdf5' in path_to_data:
+            ## path_to_data points directly to a single .hdf5 file
+            fnames = [path_to_data]
+
+        elif os.path.isidir(path_to_data):
+            ## path_to_data points to a directory containing .hdf5 data files
+
+            fnames = []
+            for this_fname in os.listdir(path_to_data):
+                if '.hdf5' in this_fname:
+                    fnames += [this_fname]
+        else:
+            raise ValueError(
+                "%s needs to point to an .hdf5 file or "+
+                "a directory containing .hdf5 files."%path_to_data)
+
+        ## take the contents of the "first" file to define particle groups and keys
+        with h5py.File(fnames[0],'r') as handle:
+            particle_groups = list(handle.keys())
+
+        ## Gadget data has a header as well as particle groups
+        ##  so we need to ignore it
+        if 'Header' in particle_groups:
+            particle_groups.pop(particle_groups.index("Header"))
+
+        print("Opening %d files and %d particle types..."%(len(fnames),len(particle_groups)))
+
+        ## create a default reader instance
+        reader = super().__init__(**kwargs)
+        for particle_group in particle_groups:
+            for i,fname in enumerate(fnames):
+                with h5py.File(fname,'r') as handle:
+                    ## (re)-initialize the coordinate array
+                    if i == 0:
+                        coordinates = np.empty((0,3))
+
+                    ## open the hdf5 group
+                    h5_group = handle[particle_group]
+                    
+                    if "Coordinates" in h5_group.keys():
+                        ## append the coordinates
+                        coordinates = np.append(coordinates,h5_group['Coordinates'][()],axis=0)
+
+                    elif ("x" in h5_group.keys() and
+                        "y" in h5_group.keys() and
+                        "z" in h5_group.keys()):
+
+                        ## read the coordinate data from x,y,z arrays
+                        xs = h5_group['x'][()]
+                        ys = h5_group['y'][()]
+                        zs = h5_group['z'][()]
+
+                        ## initialize a temporary coordinate array to append
+                        temp_coordinates = np.zeros((xs.size,3))
+                        temp_coordinates[:,0] = xs
+                        temp_coordinates[:,1] = ys
+                        temp_coordinates[:,2] = zs
+
+                        ## append the coordinates
+                        coordinates = np.append(coordinates,temp_coordinates,axis=0)
+            print(particle_group)
+            ## initialize a firefly particle group instance
+            firefly_particleGroup = ParticleGroup(particle_group,coordinates)
+            ## attach the instance to the reader
+            self.addParticleGroup(firefly_particleGroup)
+
+        ## if we truly want 1 line, should we write out json files inside init?
+        if write_jsons_to_disk:
+            reader.dumpToJSON()
+        
