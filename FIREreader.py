@@ -249,12 +249,13 @@ class FIREreader(Reader):
 
         return self.particleGroups
 
-class DefaultReader(FIREreader):
+class SimpleFIREreader(FIREreader):
     
     def __init__(
         self,
         path_to_snapshots,
-        decimation=10):
+        decimation=10,
+        **kwargs):
         """
         A highly specific iteration of FIREreader that will create JSON files with
         only a single line for a default view.
@@ -284,13 +285,9 @@ class DefaultReader(FIREreader):
             doMags = [False,False,True,False], # flags for whether we should take the magnitude of that returnKey
             doLogs = [False,True,False,False], # flags for whether we should take the log of that returnKey
             ## arguments from Reader
-            JSONdir=None, ## abs path, must be a sub-directory of Firefly/data
             write_startup = True,# True -> write | False -> leave alone | "append" -> adds to existing file
-            max_npart_per_file = 10**4,
             prefix = 'FIREData_%d'%snapnum,
-            clean_JSONdir = False,
-            options = None,
-            tweenParams=None)
+            **kwargs)
 
         ## load the data
         self.loadData()
