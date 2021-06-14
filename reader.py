@@ -3,7 +3,7 @@ from __future__ import print_function
 import h5py
 import os 
 import requests
-import json
+import pandas as pd
 import numpy as np
 
 from firefly_api.options import Options
@@ -252,7 +252,7 @@ class Reader(object):
                 #prefix=self.prefix,
                 loud=loud)
 
-    def outputToDict(self):
+    def outputToDict(self,JSON=False):
         """
         Formats the data in the reader to a python dictionary,
         using the attached Options
@@ -269,16 +269,18 @@ class Reader(object):
         ## store the options file in the output dictionary
         outputDict['options'] = self.options.outputToDict()
 
+        if JSON:
+            outputDict = pd.Series(outputDict).to_json(orient="index")
         return outputDict
 
     def sendDataViaFlask(self,port=5000):
 
-        outputDict = self.outputToDict()
+        outputDict = self.outputToDict(JSON=True)
 
         ## post the json to the listening url data_input
         ##  defined in FireflyFlaskApp.py
         print("posting...",end='')
-        requests.post(f'http://localhost:{port:d}/data_input',json=json.dumps(outputDict))
+        requests.post(f'http://localhost:{port:d}/data_input',json=outputDict)
         print("data posted!")
 
 class SimpleReader(Reader):
@@ -315,8 +317,8 @@ class SimpleReader(Reader):
                     fnames += [os.path.join(path_to_data,this_fname)]
         else:
             raise ValueError(
-                "%s needs to point to an .hdf5 file or "+
-                "a directory containing .hdf5 files."%path_to_data)
+                "%s needs to point to an .hdf5 file or "%path_to_data+
+                "a directory containing .hdf5 files.")
 
         ## take the contents of the "first" file to define particle groups and keys
         with h5py.File(fnames[0],'r') as handle:
