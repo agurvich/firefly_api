@@ -147,6 +147,9 @@ class ParticleGroup(object):
         ##  to live?
         self.coordinates = np.array(coordinates)
 
+        if self.decimation_factor > self.coordinates.shape[0]:
+            self.decimation_factor = max(1,self.coordinates.shape[0]-1)
+
         ## initialize this badboy
         self.nparts = len(coordinates)
 
@@ -263,7 +266,7 @@ class ParticleGroup(object):
         data. Chooses nparts/decimation_factor many particles randomly without
         replacement.
         """
-        if self.decimation_factor > 1:
+        if self.decimation_factor > 1 and self.nparts > self.decimation_factor:
             ## use an array of indices
             self.dec_inds = np.random.choice(
                 np.arange(self.nparts),int(self.nparts/self.decimation_factor),

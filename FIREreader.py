@@ -30,7 +30,7 @@ class FIREreader(Reader):
         snapnum, # which snapnumber to open
         ptypes = None, # which particle types to extract
         UInames = None, # what those particle types will be called in the UI
-        dec_factors = None, # factor by which to decimate the particle types by
+        decimation_factors = None, # factor by which to decimate the particle types by
         returnKeys = None, # which things to read from the simulation
         filterFlags = None, # flags whether we should filter by that returnKey
         colormapFlags = None, # flags whether we should color by that returnKey
@@ -50,7 +50,7 @@ class FIREreader(Reader):
         snapnum - integer, which snapshot to open
         ptypes=[] - list of strings, which particle types to extract (e.g. 'PartType0', 'PartType1')
         UInames=[] - list of strings, what should the particle groups be called in the UI
-        dec_factors=[] - list of integers, by what factor should the datasets be subsampled
+        decimation_factors=[] - list of integers, by what factor should the datasets be subsampled
         returnKeys=[] - list of strings, which arrays from the snapshot should we extract,
             do not include 'Coordinates'
         filterFlags=[] - list of booleans, of those, which should be "filterable"
@@ -94,7 +94,7 @@ class FIREreader(Reader):
         ## handle default input
         ptypes = [] if ptypes is None else ptypes
         UInames = [] if UInames is None else UInames
-        dec_factors = [] if dec_factors is None else dec_factors
+        decimation_factors = [] if decimation_factors is None else decimation_factors
         returnKeys = [] if returnKeys is None else returnKeys
         filterFlags = [] if filterFlags is None else filterFlags
         colormapFlags = [] if colormapFlags is None else colormapFlags
@@ -104,8 +104,8 @@ class FIREreader(Reader):
         ## input validation
         ##  ptypes
         try:
-            lists = [dec_factors,UInames]
-            names = ['dec_factors','UInames']
+            lists = [decimation_factors,UInames]
+            names = ['decimation_factors','UInames']
             for name,llist in zip(names,lists):
                 assert len(llist) == len(ptypes)
         except AssertionError:
@@ -152,7 +152,7 @@ class FIREreader(Reader):
         self.UInames = UInames
         
         ## do we want to decimate the arrays at all?
-        self.dec_factors = dec_factors
+        self.decimation_factors = decimation_factors
 
         ## what attributes do we want to load of that particle type?
         self.returnKeys = returnKeys
@@ -187,7 +187,7 @@ class FIREreader(Reader):
         and will calculate the temperature and age in gyr of star particles for you
         (You're welcome!!). Also adds these particle groups to the reader's options file.
         """
-        for ptype,UIname,dec_factor in list(zip(self.ptypes,self.UInames,self.dec_factors)):
+        for ptype,UIname,dec_factor in list(zip(self.ptypes,self.UInames,self.decimation_factors)):
             FireflyMessage("Loading ptype %s"%ptype)
             snapdict = openSnapshot(
                 self.snapdir,
@@ -278,7 +278,7 @@ class SimpleFIREreader(FIREreader):
             snapnum,
             ptypes = [0,4], # which particle types to extract
             UInames = ['gas','stars'], # what those particle types will be called in the UI
-            dec_factors = [decimation,decimation], # factor by which to decimate the particle types by
+            decimation_factors = [decimation,decimation], # factor by which to decimate the particle types by
             returnKeys = ['AgeGyr','Temperature','Velocities','GCRadius'], # which things to read from the simulation
             filterFlags = [True,True,True,True], # flags whether we should filter by that returnKey
             colormapFlags = [True,True,True,True], # flags whether we should color by that returnKey
