@@ -310,13 +310,13 @@ class SimpleReader(Reader):
             ## path_to_data points directly to a single .hdf5 file
             fnames = [path_to_data]
 
-        elif os.path.isidir(path_to_data):
+        elif os.path.isdir(path_to_data):
             ## path_to_data points to a directory containing .hdf5 data files
 
             fnames = []
             for this_fname in os.listdir(path_to_data):
                 if '.hdf5' in this_fname:
-                    fnames += [this_fname]
+                    fnames += [os.path.join(path_to_data,this_fname)]
         else:
             raise ValueError(
                 "%s needs to point to an .hdf5 file or "+
