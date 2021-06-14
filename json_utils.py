@@ -1,8 +1,12 @@
-import json
 
 import numpy as np
+import pandas as pd
+import os
 
 def clean_dictionary(dictionary):
+
+    ## if using pandas we don't need to clean any dictionaries
+    return dictionary 
     temp_dictionary = {}
 
 
@@ -45,15 +49,14 @@ def clean_dictionary(dictionary):
     return temp_dictionary
 
 def write_to_json(dictionary,path):
-    
-    temp_dictionary = clean_dictionary(dictionary)
-
-    with open(path,'w') as handle:
-        json.dump(temp_dictionary,handle)
+    return_value = pd.Series(dictionary)
+    return_value.to_json(path,orient='index')
+    return return_value
 
 def load_from_json(path):
-    with open(path,'r') as handle:
-        dictionary = json.load(handle)
+    if os.path.isfile(path):
+        with open(path,'r') as handle:
+            dictionary=pd.io.json.loads(''.join(handle.readlines()))
     return dictionary
         
     
