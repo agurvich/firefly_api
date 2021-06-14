@@ -10,7 +10,7 @@ from firefly_api.options import Options
 from firefly_api.tween import TweenParams
 from firefly_api.particlegroup import ParticleGroup
 from firefly_api.errors import FireflyError,FireflyWarning,FireflyMessage,warnings
-from firefly_api.json_utils import write_to_json,load_from_json,clean_dictionary
+from firefly_api.json_utils import write_to_json,load_from_json
 
 class Reader(object):
     """
@@ -252,7 +252,7 @@ class Reader(object):
                 #prefix=self.prefix,
                 loud=loud)
 
-    def outputToDict(self,json_friendly=False):
+    def outputToDict(self):
         """
         Formats the data in the reader to a python dictionary,
         using the attached Options
@@ -269,16 +269,11 @@ class Reader(object):
         ## store the options file in the output dictionary
         outputDict['options'] = self.options.outputToDict()
 
-        if json_friendly: outputDict = clean_dictionary(outputDict)
-
         return outputDict
 
     def sendDataViaFlask(self,port=5000):
 
-        ## need to call json_utils.clean_dictionary
-        ##  to remove any numpy types from the dictionary
-        ##  done automatically w/ json_friendly=True
-        outputDict = self.outputToDict(json_friendly=True)
+        outputDict = self.outputToDict()
 
         ## post the json to the listening url data_input
         ##  defined in FireflyFlaskApp.py
