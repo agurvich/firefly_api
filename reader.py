@@ -292,6 +292,7 @@ class SimpleReader(Reader):
         self,
         path_to_data,
         write_jsons_to_disk=True,
+        decimation_factor=1,
         **kwargs):
         """
         A simple reader that will take as minimal input the path to a 
@@ -334,7 +335,7 @@ class SimpleReader(Reader):
         print("Opening %d files and %d particle types..."%(len(fnames),len(particle_groups)))
 
         ## create a default reader instance
-        reader = super().__init__(**kwargs)
+        super().__init__(**kwargs)
         for particle_group in particle_groups:
             for i,fname in enumerate(fnames):
                 with h5py.File(fname,'r') as handle:
@@ -366,13 +367,16 @@ class SimpleReader(Reader):
 
                         ## append the coordinates
                         coordinates = np.append(coordinates,temp_coordinates,axis=0)
-            print(particle_group)
+
             ## initialize a firefly particle group instance
-            firefly_particleGroup = ParticleGroup(particle_group,coordinates)
+            firefly_particleGroup = ParticleGroup(
+                particle_group,
+                coordinates,
+                decimation_factor=decimation_factor)
             ## attach the instance to the reader
             self.addParticleGroup(firefly_particleGroup)
 
         ## if we truly want 1 line, should we write out json files inside init?
         if write_jsons_to_disk:
-            reader.dumpToJSON()
+            self.dumpToJSON()
         
