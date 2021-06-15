@@ -240,7 +240,8 @@ class Options(object):
         JSONdir,
         filename=None,
         prefix='',
-        loud=1):
+        loud=1,
+        write_jsons_to_disk=True):
         """
         Saves the current options to a JSON file.
         Input:
@@ -251,12 +252,18 @@ class Options(object):
         filename = self.options_filename if filename is None else filename
         all_options_dict = self.outputToDict()
 
-        write_to_json(all_options_dict,os.path.join(JSONdir,prefix+filename))
+
+        filename = os.path.join(JSONdir,prefix+filename)
 
         if loud:
             warnings.warn(FireflyWarning(
                 "You will need to add this options filename to"+
                 " filenames.json if this was not called by a Reader instance."))
+
+        ## convert dictionary to a JSON
+        return filename,write_to_json(
+            all_options_dict,
+            filename if write_jsons_to_disk else None) ## None -> string
 
     def loadFromJSON(self,
         filename,loud=1):

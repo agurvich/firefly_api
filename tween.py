@@ -85,18 +85,7 @@ class TweenParams(object):
         self.coordss = np.append(self.coordss,coords,axis=0)
         self.durations = np.append(self.durations,duration)
 
-    def outputToJSON(
-        self,
-        JSONdir,
-        filename=None,
-        prefix='',
-        loud=1):
-        if filename is None:
-            filename = 'tweenParams.json'
-        else:
-            ##filename = self.options_filename if filename is None else filename
-            raise NotImplementedError("Tween params must be named TweenParams.json")
-
+    def outputToDict(self):
         xs,ys,zs = self.coordss.T
         keyframe_dicts = [
             {'x':xs[i],'y':ys[i],'z':zs[i]} 
@@ -108,4 +97,25 @@ class TweenParams(object):
             'position':keyframe_dicts
         }
 
-        write_to_json(tween_params_dict,os.path.join(JSONdir,prefix+filename))
+        return tween_params_dict
+
+    def outputToJSON(
+        self,
+        JSONdir,
+        filename=None,
+        prefix='',
+        loud=1,
+        write_jsons_to_disk=True):
+        if filename is None:
+            filename = 'tweenParams.json'
+        else:
+            ##filename = self.options_filename if filename is None else filename
+            raise NotImplementedError("Tween params must be named TweenParams.json")
+
+        tween_params_dict = self.outputToDict()
+
+        filename = os.path.join(JSONdir,prefix+filename)
+
+        return filename,write_to_json(
+            tween_params_dict,
+            filename if write_jsons_to_disk else None) ## None-> returns a string

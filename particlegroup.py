@@ -344,7 +344,8 @@ class ParticleGroup(object):
         prefix, ## prefix of JSON filename
         loud=1,
         nparts_per_file = 10**4,
-        clean=0):
+        clean=0,
+        write_jsons_to_disk=True):
         """
         Outputs this ParticleGroup instance's data to JSON format, best used when coupled with a Reader
         instance's dumpToJSON method. 
@@ -361,6 +362,7 @@ class ParticleGroup(object):
         ## shuffle particles and decimate as necessary, save the output in dec_inds
         self.getDecimationIndexArray()
 
+        ## where are we saving this json to?
         full_path = os.path.join( path_prefix, path )
         if not os.path.isdir(full_path):
             os.makedirs(full_path)
@@ -369,36 +371,58 @@ class ParticleGroup(object):
                 "You will need to add the sub-filenames to"+
                 " filenames.json if this was not called by a Reader instance.")
             FireflyMessage("Writing:",self,"JSON to %s"%full_path)
+
+        ## do we want to delete any existing jsons here?
         if clean:
             warnings.warn(FireflyWarning("Removing old JSON files from %s"%full_path))
             for fname in os.listdir(full_path):
                 if "json" in fname:
                     os.remove(os.path.join(full_path,fname))
 
+        ## if the user did not specify how we should partition the data between
+        ##  sub-JSON files then we'll just do it equally
         if self.filenames_and_nparts is None:
+            ## determine if we were passed a boolean mask or a index array
             if self.dec_inds.dtype == bool:
                 nparts = np.sum(self.dec_inds)
+                self.dec_inds = np.argwhere(self.dec_inds) ## convert to an index array
             else:
                 nparts = self.dec_inds.shape[0]
+
+            ## how many sub-files are we going to need?
             nfiles = int(nparts/nparts_per_file + ((nparts%nparts_per_file)!=0))
+
+            ## how many particles will each file have and what are they named?
             filenames = [os.path.join(path,"%s%s%03d.json"%(prefix,self.UIname,i_file)) for i_file in range(nfiles)]
             nparts = [min(nparts_per_file,nparts-(i_file)*(nparts_per_file)) for i_file in range(nfiles)]
+
             self.filenames_and_nparts = list(zip(filenames,nparts))
         
+        JSON_array = []
+        ## loop through the sub-files
         cur_index = 0
         for i_file,(fname,nparts_this_file) in enumerate(self.filenames_and_nparts):
-            ## which particles to save?
+            ## pick out the indices for this file
             if self.decimation_factor > 1:
                 these_dec_inds = self.dec_inds[cur_index:cur_index+nparts_this_file]
             else:
+                ## create a dummy index array that takes everything
                 these_dec_inds = np.arange(cur_index,cur_index+nparts_this_file)
         
+            ## format an output dictionary
             outDict = self.outputToDict(these_dec_inds, i_file)
+
+            fname = os.path.join(path_prefix,fname)
+
+            JSON_array += [(
+                fname,
+                write_to_json(outDict,
+                    fname if write_jsons_to_disk else None))] ## path=None -> returns a string
+
+            ## move onto the next file
             cur_index += nparts_this_file
-
-            write_to_json(outDict,os.path.join(path_prefix,fname))
-
-        return self.filenames_and_nparts
+        
+        return JSON_array
 
     def outputToHDF5(self):
         """

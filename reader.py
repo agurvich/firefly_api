@@ -3,7 +3,6 @@ from __future__ import print_function
 import h5py
 import os 
 import requests
-import pandas as pd
 import numpy as np
 
 from firefly_api.options import Options
@@ -148,9 +147,6 @@ class Reader(object):
                     "As such, we will create a symlink for you. You're "+
                     "welcome."))
 
-        if not os.path.isdir(self.JSONdir):
-            os.makedirs(self.JSONdir)
-
         return path_prefix,path
 
     def addParticleGroup(self,particleGroup):
@@ -173,7 +169,8 @@ class Reader(object):
     
     def dumpToJSON(
         self,
-        loud=0):
+        loud=0,
+        write_jsons_to_disk=True):
         """
         Creates all the necessary JSON files to run Firefly, making sure they are
         properly linked and cross-reference correctly, using the attached Options
@@ -182,77 +179,110 @@ class Reader(object):
             loud=0 - flag for whether warnings within each outputToJSON should be shown
         """
 
-        filenamesDict = {}
+        ## handle JSON dir stuff
+        if write_jsons_to_disk:
+            if not os.path.isdir(self.JSONdir):
+                os.makedirs(self.JSONdir)
 
-        clean = self.clean_JSONdir
+            if not os.path.dirname(self.JSONdir) == 'data':
+
+                ## create a symlink so that data can 
+                ##  be read from a "sub-directory"
+                try:
+                    os.symlink(self.JSONdir,os.path.join(
+                        self.DATA_dir,
+                        self.path))
+                except FileExistsError:
+                    FireflyMessage("Symlink already exists. Skipping.")
+
+
+        ## initialize an output array to contain all the jsons and their names
+        JSON_array = []
+
         ## write each particleGroup to JSON using their own method
         ##  save the filenames into a dictionary for filenames.json
+        filenamesDict = {}
         for particleGroup in self.particleGroups:
             FireflyMessage("outputting:",particleGroup)
-            this_filenames_and_nparts = particleGroup.outputToJSON(
+            ## append the JSON arrays for this particle group
+            JSON_array += particleGroup.outputToJSON(
                 self.path,
                 self.path_prefix,
                 self.prefix,
                 loud=loud,
-                nparts_per_file = self.max_npart_per_file,
-                clean = clean)
-            filenamesDict[particleGroup.UIname]=list(this_filenames_and_nparts)
-            ## already cleaned once
-            if clean:
-                clean = False
+                nparts_per_file=self.max_npart_per_file,
+                clean=self.clean_JSONdir if particleGroup is self.particleGroups[0] else False,
+                write_jsons_to_disk=write_jsons_to_disk)
 
-        ## output the options file...
-        self.options.outputToJSON(self.JSONdir,prefix=self.prefix,loud=loud)
+            filenamesDict[particleGroup.UIname]=list(particleGroup.filenames_and_nparts)
 
-        ## really... it has to be an array with a tuple with a 0 in the nparts spot? 
+        ## output the options.json file
+        JSON_array +=[self.options.outputToJSON(
+            self.JSONdir,
+            prefix=self.prefix,
+            loud=loud,
+            write_jsons_to_disk=write_jsons_to_disk)]
+
+        ## format and output the filenames.json file
         filenamesDict['options'] = [(os.path.join(self.path,self.prefix+self.options.options_filename),0)]
 
-        write_to_json(filenamesDict,os.path.join(self.JSONdir,'filenames.json'))
+        filename=os.path.join(self.JSONdir,'filenames.json')
+        JSON_array +=[(
+            filename,
+            write_to_json(
+                filenamesDict,
+                filename if write_jsons_to_disk else None))] ## None -> returns JSON string
 
-        ## add these files to the startup.json
-        startup_path = os.path.join("data",self.path)
-        if not os.path.dirname(self.JSONdir) == 'data':
-
-            ## create a symlink so that data can 
-            ##  be read from a "sub-directory"
-            try:
-                os.symlink(self.JSONdir,os.path.join(
-                    self.DATA_dir,
-                    self.path))
-            except FileExistsError:
-                FireflyMessage("Symlink already exists. Skipping.")
-
+        ## handle the startup.json file, may need to append or totally overwrite
         startup_file = os.path.join(
             self.DATA_dir,
             'startup.json')
+
+        ## actual path to data for this dataset
+        startup_path = os.path.join("data",self.path)
 
         if self.write_startup == 'append' and os.path.isfile(startup_file):
             startup_dict = load_from_json(startup_file)
 
             maxx = 0 
-            need_to_add = True
             for key in startup_dict.keys():
                 if int(key) > maxx: 
                     maxx = int(key)
+
                 ## it's already in startup.json
                 if startup_dict[key] == startup_path:
-                    need_to_add = False
+                    startup_file = None 
+                    maxx-=1 ## since we'll add 1 below
             
-            if need_to_add:
-                startup_dict[str(maxx+1)]=startup_path
-                write_to_json(startup_dict,startup_file)
+            startup_dict[str(maxx+1)]=startup_path
+            JSON_array+=[(
+                ## recreate in case we overwrote the startup_file variable in loop above
+                os.path.join(self.DATA_dir,'startup.json'), 
+                write_to_json(
+                    startup_dict,
+                    startup_file if write_jsons_to_disk else None))] ## None -> returns JSON string
 
         elif self.write_startup:
-            write_to_json({"0":startup_path},startup_file)
+            JSON_array+=[(
+                startup_file,
+                write_to_json(
+                    {"0":startup_path},
+                    startup_file if write_jsons_to_disk else None))] ## None -> returns JSON string
 
         ## write a tweenParams file if a TweenParams instance is attached to reader
         if hasattr(self,'tweenParams') and self.tweenParams is not None:
-            self.tweenParams.outputToJSON(
+            JSON_array+=[self.tweenParams.outputToJSON(
                 self.JSONdir,
                 #prefix=self.prefix,
-                loud=loud)
+                loud=loud,
+                write_jsons_to_disk=write_jsons_to_disk)] ## None -> returns JSON string
 
-    def outputToDict(self,JSON=False):
+        ## bind the output JSONs to the object
+        self.JSONs = JSON_array
+
+        return JSON_array
+
+    def outputToDict(self):
         """
         Formats the data in the reader to a python dictionary,
         using the attached Options
@@ -269,8 +299,6 @@ class Reader(object):
         ## store the options file in the output dictionary
         outputDict['options'] = self.options.outputToDict()
 
-        if JSON:
-            outputDict = pd.Series(outputDict).to_json(orient="index")
         return outputDict
 
     def sendDataViaFlask(self,port=5000):
@@ -374,6 +402,5 @@ class SimpleReader(Reader):
             self.addParticleGroup(firefly_particleGroup)
 
         ## if we truly want 1 line, should we write out json files inside init?
-        if write_jsons_to_disk:
-            self.dumpToJSON()
+        self.JSONs = self.dumpToJSON(write_jsons_to_disk=write_jsons_to_disk)
         

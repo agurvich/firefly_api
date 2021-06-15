@@ -6,7 +6,7 @@ import os
 
 def write_to_json(dictionary,path):
     return_value = pd.Series(dictionary)
-    return_value.to_json(path,orient='index')
+    return_value = return_value.to_json(path,orient='index')
     return return_value
 
 def load_from_json(path):
@@ -14,5 +14,3 @@ def load_from_json(path):
         with open(path,'r') as handle:
             dictionary=pd.io.json.loads(''.join(handle.readlines()))
     return dictionary
-        
-    
