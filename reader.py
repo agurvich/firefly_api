@@ -277,10 +277,16 @@ class Reader(object):
                 loud=loud,
                 write_jsons_to_disk=write_jsons_to_disk)] ## None -> returns JSON string
 
-        ## bind the output JSONs to the object
-        self.JSONs = JSON_array
-
-        return JSON_array
+        if not write_jsons_to_disk:
+            ## create a single "big JSON" with all the data in it in case
+            ##  we want to send dataViaFlask
+            self.JSON = write_to_json(dict(JSON_array),None)
+        else:
+            ## we wrote all the little JSONs to disk
+            ##  so we won't store a single big JSON to send to Flask
+            ##  since we only have None's in there anyway
+            self.JSON = None
+        return self.JSON
 
     def outputToDict(self):
         """
@@ -303,12 +309,19 @@ class Reader(object):
 
     def sendDataViaFlask(self,port=5000):
 
-        outputDict = self.outputToDict(JSON=True)
+        ## retrieve a single "big JSON" of all the mini-JSON 
+        ##  sub-files. 
+        if not hasattr(self,'JSON') or self.JSON is None:
+            self.dumpToJSON(
+                loud=False,
+                write_jsons_to_disk=False)
 
         ## post the json to the listening url data_input
         ##  defined in FireflyFlaskApp.py
         print("posting...",end='')
-        requests.post(f'http://localhost:{port:d}/data_input',json=outputDict)
+        requests.post(
+            f'http://localhost:{port:d}/data_input',
+            json=self.JSON)
         print("data posted!")
 
 class SimpleReader(Reader):
@@ -401,6 +414,6 @@ class SimpleReader(Reader):
             ## attach the instance to the reader
             self.addParticleGroup(firefly_particleGroup)
 
-        ## if we truly want 1 line, should we write out json files inside init?
-        self.JSONs = self.dumpToJSON(write_jsons_to_disk=write_jsons_to_disk)
-        
+        ## either write a bunch of mini JSONs to disk or store 
+        ##  a single big JSON in self.JSON
+        self.dumpToJSON(write_jsons_to_disk=write_jsons_to_disk)
